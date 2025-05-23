@@ -41,8 +41,8 @@
 
 1. **克隆仓库**
    ```bash
-   git clone https://github.com/your-username/work-break-reminder.git
-   cd work-break-reminder
+   git clone https://github.com/WTK-007/Work-Break-Reminder.git
+   cd Work-Break-Reminder
    ```
 
 2. **安装依赖**
@@ -50,12 +50,29 @@
    npm install
    ```
 
-3. **启动开发服务器**
+3. **配置API密钥**
+   ```bash
+   # 复制示例配置文件
+   cp config/api-keys.example.js config/api-keys.js
+   
+   # 编辑配置文件，填入你的OpenRouter API密钥
+   # 获取API密钥: https://openrouter.ai/
+   ```
+   
+   在 `config/api-keys.js` 中填入你的真实API密钥：
+   ```javascript
+   export const API_CONFIG = {
+     OPENROUTER_API_KEY: "your_actual_api_key_here",
+     OPENROUTER_BASE_URL: "https://openrouter.ai/api/v1"
+   };
+   ```
+
+4. **启动开发服务器**
    ```bash
    npm run dev
    ```
 
-4. **访问应用**
+5. **访问应用**
    
    打开浏览器访问 [http://localhost:3000](http://localhost:3000)
 
@@ -112,14 +129,18 @@ npm start
 └── public/                 # 静态资源
 ```
 
-## 🔒 环境变量
+## 🔒 API密钥配置
 
-如果你想使用自己的AI API，请配置：
+本应用使用配置文件来管理API密钥，确保敏感信息不会被提交到版本控制系统。
 
-```env
-# .env.local
-OPENROUTER_API_KEY=your_api_key_here
-```
+### 配置步骤：
+1. 复制示例配置文件：`config/api-keys.example.js` → `config/api-keys.js`
+2. 在新文件中填入你的真实API密钥
+
+### 获取API密钥：
+- 访问 [OpenRouter](https://openrouter.ai/) 注册账户
+- 在控制台中创建新的API密钥
+- 将密钥填入配置文件
 
 ## 🤝 贡献指南
 

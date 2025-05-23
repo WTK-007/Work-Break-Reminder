@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import API_CONFIG from '@/config/api-keys';
 
 export type TimerState = 'idle' | 'running' | 'paused' | 'completed';
 
@@ -91,10 +92,10 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setRestSuggestions([]); // 清空之前的建议
     
     try {
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const response = await fetch(API_CONFIG.OPENROUTER_BASE_URL + "/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": "Bearer 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",
+          "Authorization": `Bearer ${API_CONFIG.OPENROUTER_API_KEY}`,
           "HTTP-Referer": window.location.origin,
           "X-Title": "Work Rest Reminder",
           "Content-Type": "application/json"
