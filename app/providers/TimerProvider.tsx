@@ -143,9 +143,9 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (isVoicesLoaded && !selectedVoice && availableVoices.length > 0) {
       const femaleVoicePreferences = [
-        '瑶瑶(甜美女声)', // 瑶瑶（甜美女声）
-        '婷婷(娇柔女声)', // 婷婷（普通话）
-        '花花(粤语女声)' // 小花（粤语）
+        'Microsoft Yaoyao - Chinese (Simplified, PRC)', // 瑶瑶（甜美女声）
+        'Google 中文（中国大陆）', // 婷婷（普通话）
+        'Google 中文（香港）' // 小花（粤语）
       ];
       
       let bestVoice = null;
