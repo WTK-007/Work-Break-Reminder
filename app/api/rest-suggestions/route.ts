@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// 强制动态渲染，避免静态生成问题
+export const dynamic = 'force-dynamic';
+
 // 动态导入配置文件，在生产环境中使用环境变量
 let API_CONFIG: any = null;
 try {

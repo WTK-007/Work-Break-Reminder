@@ -16,14 +16,14 @@ const TimerControls: React.FC = () => {
     <div className="mb-6">
       <div className="flex justify-center gap-4">
         {timerState === 'running' ? (
-          <Button 
-            onClick={pauseTimer}
-            className="bg-amber-500 hover:bg-amber-600 text-white"
-            size="lg"
-          >
-            <Pause className="w-5 h-5 mr-2" />
-            暂停
-          </Button>
+        <Button 
+          onClick={pauseTimer}
+          className="bg-amber-500 hover:bg-amber-600 text-white"
+          size="lg"
+        >
+          <Pause className="w-5 h-5 mr-2" />
+          暂停
+        </Button>
         ) : (
           <Button 
             onClick={startTimer}
@@ -36,18 +36,18 @@ const TimerControls: React.FC = () => {
              timerState === 'paused' ? '继续' : 
              timerState === 'completed' ? '重新开始' : '开始'}
           </Button>
-        )}
-        
-        <Button 
-          onClick={resetTimer}
-          variant="outline"
-          size="lg"
-          className="border-gray-300"
-          disabled={timerState === 'idle'}
-        >
-          <RotateCcw className="w-5 h-5 mr-2" />
-          重置
-        </Button>
+      )}
+      
+      <Button 
+        onClick={resetTimer}
+        variant="outline"
+        size="lg"
+        className="border-gray-300"
+        disabled={timerState === 'idle'}
+      >
+        <RotateCcw className="w-5 h-5 mr-2" />
+        重置
+      </Button>
       </div>
       
       {isTaskEmpty && (timerState === 'idle' || timerState === 'paused' || timerState === 'completed') && (
