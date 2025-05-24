@@ -1,20 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// 强制动态渲染，避免静态生成问题
-export const dynamic = 'force-dynamic';
-
-// 动态导入配置文件，在生产环境中使用环境变量
-let API_CONFIG: any = null;
-try {
-  // 开发环境使用配置文件
-  API_CONFIG = require('@/config/api-keys').default;
-} catch (error) {
-  // 生产环境使用环境变量
-  API_CONFIG = {
-    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
-    OPENROUTER_BASE_URL: process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1"
-  };
-}
+// 使用环境变量配置
+const API_CONFIG = {
+  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+  OPENROUTER_BASE_URL: process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1"
+};
 
 export async function POST(request: NextRequest) {
   try {
