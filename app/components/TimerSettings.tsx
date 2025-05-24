@@ -19,6 +19,8 @@ const TimerSettings: React.FC = () => {
     setRestSuggestions,
     voiceReminderEnabled,
     setVoiceReminderEnabled,
+    autoPlaySuggestions,
+    setAutoPlaySuggestions,
     selectedVoice,
     setSelectedVoice,
     availableVoices
@@ -202,7 +204,7 @@ const TimerSettings: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         {voiceReminderEnabled && (
           <div className="space-y-3">
             {/* 语音选择 */}
@@ -229,8 +231,26 @@ const TimerSettings: React.FC = () => {
               </Select>
             </div>
             
+            {/* 自动播放建议开关 */}
+            <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
+              <div className="flex items-center space-x-2">
+                <Volume2 className="w-4 h-4 text-[#07C160]" />
+                <span className="text-sm font-medium">自动播放休息建议</span>
+              </div>
+              <Switch
+                checked={autoPlaySuggestions}
+                onCheckedChange={setAutoPlaySuggestions}
+                disabled={isDisabled}
+                className="data-[state=checked]:bg-[#07C160] data-[state=unchecked]:bg-gray-300"
+                style={{
+                  backgroundColor: autoPlaySuggestions ? '#07C160' : '#d1d5db',
+                  borderColor: autoPlaySuggestions ? '#07C160' : '#d1d5db'
+                }}
+              />
+            </div>
+            
             <p className="text-xs text-gray-500 px-1">
-              计时结束后将播放提示音和温柔的语音提醒
+              计时结束后将播放提示音和温柔的语音提醒{autoPlaySuggestions ? '，然后自动播放休息建议' : ''}
             </p>
           </div>
         )}

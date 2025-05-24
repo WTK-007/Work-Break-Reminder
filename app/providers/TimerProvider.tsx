@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 
 export type TimerState = 'idle' | 'running' | 'paused' | 'completed';
 
@@ -21,9 +21,14 @@ interface TimerContextType {
   isLoadingSuggestions: boolean;
   voiceReminderEnabled: boolean;
   setVoiceReminderEnabled: (enabled: boolean) => void;
+  autoPlaySuggestions: boolean;
+  setAutoPlaySuggestions: (enabled: boolean) => void;
   selectedVoice: string;
   setSelectedVoice: (voiceName: string) => void;
   availableVoices: SpeechSynthesisVoice[];
+  playRestSuggestions: (shouldCancel?: boolean) => void;
+  stopRestSuggestions: () => void;
+  isPlayingSuggestions: boolean;
 }
 
 const TimerContext = createContext<TimerContextType | undefined>(undefined);
@@ -45,15 +50,25 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [restSuggestions, setRestSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<boolean>(false);
   const [voiceReminderEnabled, setVoiceReminderEnabled] = useState<boolean>(true);
+  const [autoPlaySuggestions, setAutoPlaySuggestions] = useState<boolean>(true);
   const [selectedVoice, setSelectedVoice] = useState<string>('');
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [isVoicesLoaded, setIsVoicesLoaded] = useState<boolean>(false);
+  const [isPlayingSuggestions, setIsPlayingSuggestions] = useState<boolean>(false);
+  const [hasPlayedSuggestions, setHasPlayedSuggestions] = useState(false);
+  const [voiceReminderCompleted, setVoiceReminderCompleted] = useState(false);
+  const [hasPlayedNotificationSound, setHasPlayedNotificationSound] = useState(false);
+  
+  // 使用useRef来更可靠地防止重复播放
+  const notificationSoundPlayedRef = useRef(false);
+  const currentTimerSessionRef = useRef(0);
 
   // Load saved preferences from localStorage on initial load
   useEffect(() => {
     const savedTask = localStorage.getItem('currentTask');
     const savedDuration = localStorage.getItem('timerDuration');
     const savedVoiceReminder = localStorage.getItem('voiceReminderEnabled');
+    const savedAutoPlay = localStorage.getItem('autoPlaySuggestions');
     const savedVoice = localStorage.getItem('selectedVoice');
 
     if (savedTask) setCurrentTask(savedTask);
@@ -64,6 +79,9 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     if (savedVoiceReminder !== null) {
       setVoiceReminderEnabled(savedVoiceReminder === 'true');
+    }
+    if (savedAutoPlay !== null) {
+      setAutoPlaySuggestions(savedAutoPlay === 'true');
     }
     if (savedVoice) {
       setSelectedVoice(savedVoice);
@@ -169,13 +187,33 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [isVoicesLoaded, availableVoices, selectedVoice]);
 
+  // 监听休息建议加载完成并自动播放
+  useEffect(() => {
+    // 检查是否需要自动播放休息建议
+    if (autoPlaySuggestions && 
+        voiceReminderCompleted &&
+        restSuggestions.length > 0 && 
+        !hasPlayedSuggestions &&
+        timerState === 'completed' &&
+        !isLoadingSuggestions) {
+      
+      console.log("条件满足，开始自动播放休息建议");
+      setHasPlayedSuggestions(true);
+      
+      setTimeout(() => {
+        playRestSuggestions(false); // false表示不要cancel现有语音
+      }, 800); // 稍长的延迟让用户有个缓冲
+    }
+  }, [autoPlaySuggestions, voiceReminderCompleted, restSuggestions, hasPlayedSuggestions, timerState, isLoadingSuggestions]);
+
   // Save preferences to localStorage when they change
   useEffect(() => {
     localStorage.setItem('currentTask', currentTask);
     localStorage.setItem('timerDuration', timerDuration.toString());
     localStorage.setItem('voiceReminderEnabled', voiceReminderEnabled.toString());
+    localStorage.setItem('autoPlaySuggestions', autoPlaySuggestions.toString());
     localStorage.setItem('selectedVoice', selectedVoice);
-  }, [currentTask, timerDuration, voiceReminderEnabled, selectedVoice]);
+  }, [currentTask, timerDuration, voiceReminderEnabled, autoPlaySuggestions, selectedVoice]);
 
   // Timer logic
   useEffect(() => {
@@ -185,7 +223,8 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           if (prevTime <= 1) {
             clearInterval(interval);
             setTimerState('completed');
-            fetchRestSuggestions();
+            // 调用播放函数，让函数内部处理防重复
+            console.log("计时完成，准备播放提示音");
             playNotificationSound();
             return 0;
           }
@@ -208,6 +247,8 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setIsLoadingSuggestions(true);
     setRestSuggestions([]); // 清空之前的建议
     
+    console.log(`开始获取休息建议，任务: "${currentTask}", 时长: ${Math.floor(timerDuration / 60)}分钟`);
+    
     try {
       const response = await fetch("/api/rest-suggestions", {
         method: "POST",
@@ -225,32 +266,75 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       const data = await response.json();
+      console.log("API返回的休息建议:", data.suggestions);
       setRestSuggestions(data.suggestions);
       
     } catch (error) {
       console.error("Error fetching rest suggestions:", error);
-      // 使用默认建议作为后备
-      setRestSuggestions([
-        "起身在房间或办公室里简单走动一下，活动活动身体。",
-        "做一些简单的伸展运动，放松颈部、肩膀和背部肌肉。",
-        "让眼睛休息一下，看向20英尺外的地方20秒钟，缓解眼部疲劳。"
-      ]);
+      // 使用多样化的随机默认建议作为后备
+      const diverseDefaultSuggestions = [
+        "尝试5分钟的深呼吸冥想，专注于呼吸节奏。",
+        "播放一首喜欢的音乐，随着节拍轻松摆动身体。",
+        "给朋友或家人发一条关心的消息。",
+        "观察窗外的景色，寻找三个之前没注意到的细节。",
+        "做一些简单的颈部和肩膀拉伸运动。",
+        "喝一杯温水，慢慢品味每一口。",
+        "整理一下工作桌面，让环境更整洁。",
+        "练习几分钟正念，专注当下的感受。",
+        "阅读几页轻松的文章或小故事。",
+        "做几个简单的眼球运动练习。"
+      ];
+      
+      // 随机选择3个不同的建议
+      const randomSuggestions = diverseDefaultSuggestions
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+      
+      console.log("API调用失败，使用随机默认建议:", randomSuggestions);
+      setRestSuggestions(randomSuggestions);
+      
     } finally {
       setIsLoadingSuggestions(false);
     }
   };
 
   const playNotificationSound = () => {
-    // 播放提示音
-    const audio = new Audio('/notification.mp3');
-    audio.play().catch(e => console.log("Audio play failed:", e));
+    console.log("playNotificationSound被调用，ref状态:", notificationSoundPlayedRef.current);
+    
+    // 检查是否已播放过
+    if (notificationSoundPlayedRef.current) {
+      console.log("提示音已播放过，跳过");
+      return;
+    }
+    
+    // 标记为已播放
+    notificationSoundPlayedRef.current = true;
+    console.log("设置ref为true，开始播放提示音");
+    
+    // 创建并播放提示音
+    try {
+      const audio = new Audio('/notification.mp3');
+      audio.volume = 0.8;
+      
+      audio.play()
+        .then(() => {
+          console.log("✅ 提示音播放成功");
+        })
+        .catch(e => {
+          console.log("❌ 提示音播放失败:", e);
+        });
+        
+    } catch (error) {
+      console.log("❌ 创建音频对象失败:", error);
+    }
     
     // 根据用户设置决定是否播放语音提醒
     if (voiceReminderEnabled) {
-      // 延迟一点播放语音，让提示音先播放
       setTimeout(() => {
         playVoiceReminder();
       }, 500);
+    } else {
+      setVoiceReminderCompleted(true);
     }
   };
 
@@ -287,6 +371,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         utterance.onend = () => {
           console.log("语音提醒播放完成");
+          setVoiceReminderCompleted(true);
         };
         
         utterance.onerror = (event) => {
@@ -305,11 +390,26 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const startTimer = useCallback(() => {
-    // If restarting from completed state, need to reset remaining time
+    // 重置所有状态
+    setHasPlayedSuggestions(false);
+    setVoiceReminderCompleted(false);
+    setHasPlayedNotificationSound(false);
+    
+    // 使用ref重置，更可靠
+    notificationSoundPlayedRef.current = false;
+    currentTimerSessionRef.current += 1; // 增加会话ID
+    
+    console.log(`开始新的计时会话: ${currentTimerSessionRef.current}`);
+    
     if (timerState === 'completed') {
       setRemainingTime(timerDuration);
-      setRestSuggestions([]); // Clear previous rest suggestions
+      setRestSuggestions([]);
     }
+    
+    // 每次开始计时都重新获取休息建议，确保建议是最新的
+    console.log("开始计时，提前获取休息建议");
+    fetchRestSuggestions();
+    
     setTimerState('running');
   }, [timerState, timerDuration]);
 
@@ -321,7 +421,99 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setRemainingTime(timerDuration);
     setTimerState('idle');
     setRestSuggestions([]);
+    setHasPlayedSuggestions(false);
+    setVoiceReminderCompleted(false);
+    setHasPlayedNotificationSound(false);
   }, [timerDuration]);
+
+  const playRestSuggestions = (shouldCancel: boolean = true) => {
+    if (restSuggestions.length === 0) {
+      return;
+    }
+
+    if ('speechSynthesis' in window) {
+      setIsPlayingSuggestions(true);
+      
+      // 根据参数决定是否停止当前播放的语音
+      if (shouldCancel) {
+        speechSynthesis.cancel();
+      }
+      
+      try {
+        // 准备播放的文本内容
+        const introText = "为您推荐以下休息活动：";
+        const suggestionTexts = restSuggestions.map((suggestion, index) => 
+          `第${index + 1}个建议：${suggestion}`
+        );
+        const outroText = "选择一个你喜欢的活动，好好休息一下吧！";
+        
+        const allTexts = [introText, ...suggestionTexts, outroText];
+        let currentIndex = 0;
+        
+        const playNext = () => {
+          if (currentIndex >= allTexts.length) {
+            setIsPlayingSuggestions(false);
+            return;
+          }
+          
+          const utterance = new SpeechSynthesisUtterance(allTexts[currentIndex]);
+          
+          // 使用用户选择的语音
+          if (selectedVoice) {
+            const voices = speechSynthesis.getVoices();
+            const chosenVoice = voices.find(voice => voice.name === selectedVoice);
+            if (chosenVoice) {
+              utterance.voice = chosenVoice;
+            }
+          }
+          
+          // 设置温柔的语音参数
+          utterance.lang = 'zh-CN';
+          utterance.rate = 0.75;  // 稍慢一些，便于理解
+          utterance.pitch = 1.2;  // 温和的音调
+          utterance.volume = 0.9;
+          
+          utterance.onend = () => {
+            currentIndex++;
+            // 建议之间增加短暂停顿
+            setTimeout(playNext, currentIndex === 1 ? 800 : 1200);
+          };
+          
+          utterance.onerror = (event) => {
+            console.log("语音播放出错:", event.error);
+            setIsPlayingSuggestions(false);
+          };
+          
+          speechSynthesis.speak(utterance);
+        };
+        
+        playNext();
+        
+        console.log("开始播放休息建议");
+        
+      } catch (error) {
+        console.log("语音播放失败:", error);
+        setIsPlayingSuggestions(false);
+      }
+    } else {
+      console.log("浏览器不支持语音合成功能");
+    }
+  };
+
+  const stopRestSuggestions = () => {
+    if ('speechSynthesis' in window) {
+      speechSynthesis.cancel();
+    }
+    setIsPlayingSuggestions(false);
+    console.log("停止播放休息建议");
+  };
+
+  // 当语音提醒关闭时，自动关闭自动播放休息建议
+  useEffect(() => {
+    if (!voiceReminderEnabled && autoPlaySuggestions) {
+      setAutoPlaySuggestions(false);
+    }
+  }, [voiceReminderEnabled, autoPlaySuggestions]);
 
   const value = {
     currentTask,
@@ -340,9 +532,14 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     isLoadingSuggestions,
     voiceReminderEnabled,
     setVoiceReminderEnabled,
+    autoPlaySuggestions,
+    setAutoPlaySuggestions,
     selectedVoice,
     setSelectedVoice,
-    availableVoices
+    availableVoices,
+    playRestSuggestions,
+    stopRestSuggestions,
+    isPlayingSuggestions
   };
 
   return <TimerContext.Provider value={value}>{children}</TimerContext.Provider>;
