@@ -57,24 +57,16 @@
 
 3. **配置API密钥**
    
-   **方式一：使用配置文件（开发环境推荐）**
-   ```bash
-   # 复制示例配置文件
-   cp config/api-keys.example.js config/api-keys.js
-   ```
-   
-   在 `config/api-keys.js` 中填入你的真实API密钥：
-   ```javascript
-   export const API_CONFIG = {
-     OPENROUTER_API_KEY: "your_actual_api_key_here",
-     OPENROUTER_BASE_URL: "https://openrouter.ai/api/v1"
-   };
-   ```
-
-   **方式二：使用环境变量**
+   创建环境变量文件:
    ```bash
    # 创建环境变量文件
-   echo "OPENROUTER_API_KEY=your_api_key_here" > .env.local
+   touch .env.local
+   ```
+   
+   在 `.env.local` 中添加以下内容:
+   ```
+   OPENROUTER_API_KEY=your_openrouter_api_key_here
+   OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
    ```
 
 4. **启动开发服务器**
@@ -116,6 +108,8 @@ npm start
    OPENROUTER_API_KEY=your_openrouter_api_key_here
    OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
    ```
+
+   > ⚠️ **注意**: 项目现在已经修改为直接使用环境变量，不再使用配置文件。在Vercel部署时，必须设置上述环境变量，否则AI休息建议功能将无法正常工作。
 
 3. **部署完成**
    - Vercel自动构建和部署
@@ -212,20 +206,24 @@ npm start
 ## 🔒 API密钥配置
 
 ### 本地开发
-使用配置文件管理API密钥：
-1. 复制 `config/api-keys.example.js` 为 `config/api-keys.js`
-2. 在新文件中填入真实API密钥
-3. 文件已在 `.gitignore` 中，不会被提交
+使用环境变量管理API密钥：
+1. 在项目根目录创建 `.env.local` 文件
+2. 添加以下内容:
+   ```
+   OPENROUTER_API_KEY=your_openrouter_api_key_here
+   OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+   ```
+3. 该文件已在 `.gitignore` 中，不会被提交到仓库
 
 ### 生产部署
 使用环境变量安全管理：
 - Vercel: 在项目设置中配置环境变量
-- 其他平台: 参考 `vercel.env.example`
+- 其他平台: 确保设置相同的环境变量
 
 ### 获取API密钥
 - 访问 [OpenRouter](https://openrouter.ai/) 注册账户
 - 在控制台中创建新的API密钥
-- 将密钥填入配置文件或环境变量
+- 将密钥填入环境变量
 
 ## 🤝 贡献指南
 

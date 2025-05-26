@@ -39,4 +39,3 @@ next-env.d.ts
 config/api-keys.js
 config/api-keys.ts
 config/dev-env.js
-config/env.config.js

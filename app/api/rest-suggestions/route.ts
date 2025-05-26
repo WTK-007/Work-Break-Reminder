@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import ENV_CONFIG from '@/config/env.config';
 
-// 从配置文件加载API配置
+// 直接使用环境变量而不是配置文件
 const API_CONFIG = {
-  OPENROUTER_API_KEY: ENV_CONFIG.OPENROUTER_API_KEY,
-  OPENROUTER_BASE_URL: ENV_CONFIG.OPENROUTER_BASE_URL
+  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || '',
+  OPENROUTER_BASE_URL: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1'
 };
 
 export async function POST(request: NextRequest) {
