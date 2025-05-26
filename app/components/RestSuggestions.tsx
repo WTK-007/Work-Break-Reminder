@@ -32,8 +32,8 @@ const RestSuggestions: React.FC = () => {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="flex items-center text-lg font-medium">
-        <Coffee className="w-5 h-5 mr-2 text-[#07C160]" />
+        <h2 className="flex items-center text-lg font-medium text-amber-700">
+        <Coffee className="w-5 h-5 mr-2 text-amber-600" />
         休息建议
       </h2>
         
@@ -44,7 +44,7 @@ const RestSuggestions: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => playRestSuggestions()}
-                className="text-xs px-3 py-1 h-8 border-[#07C160] text-[#07C160] hover:bg-[#07C160] hover:text-white"
+                className="text-xs px-3 py-1 h-8 border-amber-500 text-amber-600 hover:bg-amber-500 hover:text-white"
               >
                 <Volume2 className="w-3 h-3 mr-1" />
                 播放建议
@@ -66,9 +66,9 @@ const RestSuggestions: React.FC = () => {
       
       {isLoadingSuggestions ? (
         <div className="space-y-3">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full bg-amber-100" />
+          <Skeleton className="h-20 w-full bg-amber-100" />
+          <Skeleton className="h-20 w-full bg-amber-100" />
         </div>
       ) : (
         <div className="space-y-3">
@@ -77,15 +77,15 @@ const RestSuggestions: React.FC = () => {
               key={index} 
               className={`p-4 transition-colors ${
                 isPlayingSuggestions 
-                  ? 'bg-green-50 border-green-200' 
-                  : 'hover:bg-gray-50'
+                  ? 'bg-amber-50 border-amber-200' 
+                  : 'hover:bg-amber-50 border-amber-100'
               }`}
             >
               <div className="flex items-start">
-                <div className="flex-shrink-0 bg-[#07C160] text-white w-8 h-8 rounded-full flex items-center justify-center mr-3">
+                <div className="flex-shrink-0 bg-amber-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 shadow-sm">
                   {index + 1}
                 </div>
-                <p>{suggestion}</p>
+                <p className="text-amber-900">{suggestion}</p>
               </div>
             </Card>
           ))}
@@ -93,7 +93,7 @@ const RestSuggestions: React.FC = () => {
       )}
       
       {voiceReminderEnabled && restSuggestions.length > 0 && !isLoadingSuggestions && (
-        <p className="text-xs text-gray-500 mt-3 text-center">
+        <p className="text-xs text-amber-600 mt-3 text-center">
           {isPlayingSuggestions ? "正在为您播放休息建议..." : "点击\"播放建议\"按钮可听取语音版休息建议"}
         </p>
       )}

@@ -123,8 +123,8 @@ const TimerSettings: React.FC = () => {
 
   return (
     <div className="mb-6">
-      <Label className="block text-sm font-medium mb-3">
-        <Clock className="w-4 h-4 inline-block mr-1" />
+      <Label className="block text-sm font-medium mb-3 text-amber-700">
+        <Clock className="w-4 h-4 inline-block mr-1 text-amber-600" />
         工作时长设置
       </Label>
       
@@ -135,8 +135,8 @@ const TimerSettings: React.FC = () => {
             variant={timerDuration === preset.minutes * 60 ? "default" : "outline"}
             className={
               timerDuration === preset.minutes * 60 
-                ? "bg-[#07C160] hover:bg-[#06a050] text-white" 
-                : "border-gray-200"
+                ? "bg-amber-600 hover:bg-amber-700 text-white" 
+                : "border-amber-200 text-amber-700 hover:bg-amber-50"
             }
             onClick={() => handlePresetSelect(preset.minutes)}
             disabled={isDisabled}
@@ -154,7 +154,7 @@ const TimerSettings: React.FC = () => {
             max="720"
             value={customMinutes}
             onChange={handleCustomTimeChange}
-            className="w-full"
+            className="w-full focus-visible:ring-amber-500"
             disabled={isDisabled}
             aria-label="自定义分钟数"
           />
@@ -162,25 +162,25 @@ const TimerSettings: React.FC = () => {
         <Button 
           type="submit"
           variant="outline"
-          className="border-gray-200"
+          className="border-amber-300 text-amber-700 hover:bg-amber-50"
           disabled={isDisabled}
         >
           设置
         </Button>
       </form>
       
-      <p className="text-xs text-gray-500 mb-4">可设置1-720分钟范围的工作时长</p>
+      <p className="text-xs text-amber-600 mb-4">可设置1-720分钟范围的工作时长</p>
 
       {/* 语音提醒设置 */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
+        <div className="flex items-center justify-between p-3 border border-amber-200 rounded-lg bg-amber-50">
           <div className="flex items-center space-x-2">
             {voiceReminderEnabled ? (
-              <Volume2 className="w-4 h-4 text-[#07C160]" />
+              <Volume2 className="w-4 h-4 text-amber-600" />
             ) : (
-              <VolumeX className="w-4 h-4 text-gray-400" />
+              <VolumeX className="w-4 h-4 text-amber-400" />
             )}
-            <span className="text-sm font-medium">语音提醒</span>
+            <span className="text-sm font-medium text-amber-700">语音提醒</span>
           </div>
           <div className="flex items-center space-x-2">
             {voiceReminderEnabled && (
@@ -189,7 +189,7 @@ const TimerSettings: React.FC = () => {
                 size="sm"
                 onClick={testVoiceReminder}
                 disabled={isDisabled}
-                className="text-xs px-2 py-1 h-6 border-[#07C160] text-[#07C160] hover:bg-[#07C160] hover:text-white"
+                className="text-xs px-2 py-1 h-6 border-amber-500 text-amber-600 hover:bg-amber-500 hover:text-white"
               >
                 试听
               </Button>
@@ -199,11 +199,7 @@ const TimerSettings: React.FC = () => {
                 checked={voiceReminderEnabled}
                 onCheckedChange={setVoiceReminderEnabled}
                 disabled={isDisabled}
-                className="data-[state=checked]:bg-[#07C160] data-[state=unchecked]:bg-gray-300 data-[state=checked]:border-[#07C160] data-[state=unchecked]:border-gray-300"
-                style={{
-                  backgroundColor: voiceReminderEnabled ? '#07C160' : '#d1d5db',
-                  borderColor: voiceReminderEnabled ? '#07C160' : '#d1d5db'
-                }}
+                className="data-[state=checked]:bg-amber-500 data-[state=unchecked]:bg-amber-200"
               />
             </div>
           </div>
@@ -212,17 +208,17 @@ const TimerSettings: React.FC = () => {
         {voiceReminderEnabled && (
           <div className="space-y-3">
             {/* 语音选择 */}
-            <div className="p-3 border border-gray-200 rounded-lg bg-gray-50">
+            <div className="p-3 border border-amber-200 rounded-lg bg-amber-50">
               <div className="flex items-center space-x-2 mb-2">
-                <Mic className="w-4 h-4 text-[#07C160]" />
-                <span className="text-sm font-medium">选择语音</span>
+                <Mic className="w-4 h-4 text-amber-600" />
+                <span className="text-sm font-medium text-amber-700">选择语音</span>
               </div>
               <Select
                 value={selectedVoice}
                 onValueChange={setSelectedVoice}
                 disabled={isDisabled}
               >
-                <SelectTrigger className="w-full bg-white">
+                <SelectTrigger className="w-full bg-white border-amber-200 focus:ring-amber-500">
                   <SelectValue placeholder="选择一个语音..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -236,24 +232,20 @@ const TimerSettings: React.FC = () => {
             </div>
             
             {/* 自动播放建议开关 */}
-            <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
+            <div className="flex items-center justify-between p-3 border border-amber-200 rounded-lg bg-amber-50">
               <div className="flex items-center space-x-2">
-                <Volume2 className="w-4 h-4 text-[#07C160]" />
-                <span className="text-sm font-medium">自动播放休息建议</span>
+                <Volume2 className="w-4 h-4 text-amber-600" />
+                <span className="text-sm font-medium text-amber-700">自动播放休息建议</span>
               </div>
               <Switch
                 checked={autoPlaySuggestions}
                 onCheckedChange={setAutoPlaySuggestions}
                 disabled={isDisabled}
-                className="data-[state=checked]:bg-[#07C160] data-[state=unchecked]:bg-gray-300"
-                style={{
-                  backgroundColor: autoPlaySuggestions ? '#07C160' : '#d1d5db',
-                  borderColor: autoPlaySuggestions ? '#07C160' : '#d1d5db'
-                }}
+                className="data-[state=checked]:bg-amber-500 data-[state=unchecked]:bg-amber-200"
               />
             </div>
             
-            <p className="text-xs text-gray-500 px-1">
+            <p className="text-xs text-amber-600 px-1">
               计时结束后将播放提示音和温柔的语音提醒{autoPlaySuggestions ? '，然后自动播放休息建议' : ''}
             </p>
           </div>

@@ -18,7 +18,7 @@ const TimerControls: React.FC = () => {
         {timerState === 'running' ? (
         <Button 
           onClick={pauseTimer}
-          className="bg-amber-500 hover:bg-amber-600 text-white"
+          className="bg-amber-500 hover:bg-amber-600 text-white shadow-sm"
           size="lg"
         >
           <Pause className="w-5 h-5 mr-2" />
@@ -27,7 +27,7 @@ const TimerControls: React.FC = () => {
         ) : (
           <Button 
             onClick={startTimer}
-            className="bg-[#07C160] hover:bg-[#06a050] text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="bg-amber-600 hover:bg-amber-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed shadow-sm"
             size="lg"
             disabled={isTaskEmpty}
           >
@@ -42,7 +42,7 @@ const TimerControls: React.FC = () => {
         onClick={resetTimer}
         variant="outline"
         size="lg"
-        className="border-gray-300"
+        className="border-amber-300 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
         disabled={timerState === 'idle'}
       >
         <RotateCcw className="w-5 h-5 mr-2" />

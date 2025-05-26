@@ -18,9 +18,9 @@ const TimerDisplay: React.FC = () => {
       return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     } else {
       // 不到1小时，显示MM:SS格式
-      const mins = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
   };
 
@@ -28,13 +28,19 @@ const TimerDisplay: React.FC = () => {
   const progress = (remainingTime / timerDuration) * 100;
   
   return (
-    <Card className="p-6 mb-6 relative overflow-hidden">
+    <Card className="p-6 mb-6 relative overflow-hidden border border-amber-100 shadow-md">
       <div className="text-center">
-        <div className="text-5xl font-bold mb-2 tabular-nums tracking-tight">
+        <div className="text-5xl font-bold mb-2 tabular-nums tracking-tight text-amber-700">
           {formatTime(remainingTime)}
         </div>
         
-        <div className="text-sm text-muted-foreground">
+        <div className={cn(
+          "text-sm transition-colors",
+          timerState === 'idle' && 'text-amber-600',
+          timerState === 'running' && 'text-amber-600',
+          timerState === 'paused' && 'text-amber-500',
+          timerState === 'completed' && 'text-amber-600 font-medium'
+        )}>
           {timerState === 'idle' && '准备开始工作'}
           {timerState === 'running' && '专注工作中...'}
           {timerState === 'paused' && '已暂停'}
@@ -43,15 +49,15 @@ const TimerDisplay: React.FC = () => {
       </div>
       
       <div className={cn(
-        "mt-4 h-2 bg-gray-100 rounded-full overflow-hidden transition-all duration-300",
-        timerState === 'completed' && "bg-gray-200"
+        "mt-4 h-2 bg-amber-100 rounded-full overflow-hidden transition-all duration-300",
+        timerState === 'completed' && "bg-amber-100"
       )}>
         <div 
           className={cn(
             "h-full rounded-full transition-all duration-1000",
-            timerState === 'running' ? "bg-[#07C160]" : 
+            timerState === 'running' ? "bg-amber-500" : 
             timerState === 'paused' ? "bg-amber-400" : 
-            timerState === 'completed' ? "bg-blue-400" : "bg-gray-300"
+            timerState === 'completed' ? "bg-amber-600" : "bg-amber-300"
           )} 
           style={{ width: `${progress}%` }}
         />
