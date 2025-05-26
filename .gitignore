@@ -38,3 +38,5 @@ next-env.d.ts
 # API Keys and sensitive configuration
 config/api-keys.js
 config/api-keys.ts
+config/dev-env.js
+config/env.config.js

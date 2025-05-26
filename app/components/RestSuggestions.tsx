@@ -33,9 +33,9 @@ const RestSuggestions: React.FC = () => {
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
       <div className="flex items-center justify-between mb-3">
         <h2 className="flex items-center text-lg font-medium">
-          <Coffee className="w-5 h-5 mr-2 text-[#07C160]" />
-          休息建议
-        </h2>
+        <Coffee className="w-5 h-5 mr-2 text-[#07C160]" />
+        休息建议
+      </h2>
         
         {voiceReminderEnabled && restSuggestions.length > 0 && !isLoadingSuggestions && (
           <div className="flex items-center space-x-2">

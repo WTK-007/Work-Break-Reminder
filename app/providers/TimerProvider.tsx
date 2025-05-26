@@ -313,7 +313,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     // 创建并播放提示音
     try {
-      const audio = new Audio('/notification.mp3');
+    const audio = new Audio('/notification.mp3');
       audio.volume = 0.8;
       
       audio.play()
@@ -342,8 +342,8 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // 检查浏览器是否支持语音合成
     if ('speechSynthesis' in window) {
       try {
-        // 创建温柔的语音提醒内容
-        const reminderText = `工作时间结束了！你已经专注工作${Math.floor(timerDuration / 60)}分钟，现在该休息一下了吧！`;
+        // 创建简洁的语音提醒内容
+        const reminderText = `工作时间结束了，你已经专注工作${Math.floor(timerDuration / 60)}分钟，现在该休息一下了`;
         
         // 创建语音合成实例
         const utterance = new SpeechSynthesisUtterance(reminderText);
@@ -390,6 +390,12 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const startTimer = useCallback(() => {
+    // 验证任务内容
+    if (!currentTask || currentTask.trim() === '') {
+      console.log("无法开始计时：任务内容为空");
+      return;
+    }
+    
     // 重置所有状态
     setHasPlayedSuggestions(false);
     setVoiceReminderCompleted(false);
@@ -406,12 +412,13 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setRestSuggestions([]);
     }
     
-    // 每次开始计时都重新获取休息建议，确保建议是最新的
-    console.log("开始计时，提前获取休息建议");
+    // 在计时开始前预先获取休息建议
+    console.log("计时开始前预先获取休息建议");
     fetchRestSuggestions();
     
+    // 设置计时器状态为运行
     setTimerState('running');
-  }, [timerState, timerDuration]);
+  }, [timerState, timerDuration, currentTask]);
 
   const pauseTimer = useCallback(() => {
     setTimerState('paused');
@@ -440,12 +447,12 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       
       try {
-        // 准备播放的文本内容
-        const introText = "为您推荐以下休息活动：";
+        // 准备播放的文本内容，使用更简洁的格式
+        const introText = "为您推荐以下休息活动";
         const suggestionTexts = restSuggestions.map((suggestion, index) => 
-          `第${index + 1}个建议：${suggestion}`
+          `第${index + 1}个，${suggestion}`
         );
-        const outroText = "选择一个你喜欢的活动，好好休息一下吧！";
+        const outroText = "选择一个你喜欢的活动，好好休息一下吧";
         
         const allTexts = [introText, ...suggestionTexts, outroText];
         let currentIndex = 0;

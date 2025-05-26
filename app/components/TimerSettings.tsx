@@ -33,6 +33,8 @@ const TimerSettings: React.FC = () => {
     { label: '15分钟', minutes: 15 },
     { label: '30分钟', minutes: 30 },
     { label: '60分钟', minutes: 60 },
+    { label: '90分钟', minutes: 90 },
+    { label: '120分钟', minutes: 120 },
   ];
 
   const handlePresetSelect = (minutes: number) => {
@@ -53,7 +55,7 @@ const TimerSettings: React.FC = () => {
   const handleCustomTimeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const minutes = parseInt(customMinutes, 10) || 1; // Default to 1 if invalid
-    const clampedMinutes = Math.min(Math.max(minutes, 1), 120); // Clamp between 1-120
+    const clampedMinutes = Math.min(Math.max(minutes, 1), 720); // 调整为1-720分钟范围
     const seconds = clampedMinutes * 60;
     
     setTimerDuration(seconds);
@@ -144,12 +146,12 @@ const TimerSettings: React.FC = () => {
         ))}
       </div>
       
-      <form onSubmit={handleCustomTimeSubmit} className="flex gap-2 mb-4">
+      <form onSubmit={handleCustomTimeSubmit} className="flex gap-2 mb-1">
         <div className="flex-1">
           <Input
             type="number"
             min="1"
-            max="120"
+            max="720"
             value={customMinutes}
             onChange={handleCustomTimeChange}
             className="w-full"
@@ -166,6 +168,8 @@ const TimerSettings: React.FC = () => {
           设置
         </Button>
       </form>
+      
+      <p className="text-xs text-gray-500 mb-4">可设置1-720分钟范围的工作时长</p>
 
       {/* 语音提醒设置 */}
       <div className="space-y-3">

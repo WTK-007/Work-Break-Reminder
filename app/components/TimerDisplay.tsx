@@ -8,11 +8,20 @@ import { cn } from '@/lib/utils';
 const TimerDisplay: React.FC = () => {
   const { remainingTime, timerDuration, timerState } = useTimer();
   
-  // Format time as MM:SS
+  // Format time as HH:MM:SS or MM:SS depending on duration
   const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    if (seconds >= 3600) {
+      // 超过1小时，显示HH:MM:SS格式
+      const hours = Math.floor(seconds / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+      // 不到1小时，显示MM:SS格式
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
   };
 
   // Calculate progress percentage
