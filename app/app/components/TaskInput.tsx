@@ -13,17 +13,16 @@ const TaskInput: React.FC = () => {
     <div className="mb-6">
       <Label htmlFor="task-input" className="block text-sm font-medium mb-2 text-blue-700">
         <Pencil className="w-4 h-4 inline-block mr-1 text-blue-600" />
-        Current Task <span className="text-red-500">*</span>
+        Current Task (Optional)
       </Label>
       <Input
         id="task-input"
         type="text"
-        placeholder="Enter your current work task..."
+        placeholder="Enter your current work task... (optional)"
         value={currentTask}
         onChange={(e) => setCurrentTask(e.target.value)}
         disabled={timerState === 'running'}
         className="w-full bg-white border-blue-200 focus-visible:ring-blue-500 focus-visible:ring-offset-blue-200"
-        required
       />
     </div>
   );

@@ -25,7 +25,7 @@ const TimerDisplay: React.FC = () => {
   };
 
   // Calculate progress percentage
-  const progress = (remainingTime / timerDuration) * 100;
+  const progress = timerDuration > 0 ? (remainingTime / timerDuration) * 100 : 0;
   
   return (
     <Card className="p-6 mb-6 relative overflow-hidden border border-blue-100 shadow-md">
@@ -41,7 +41,7 @@ const TimerDisplay: React.FC = () => {
           timerState === 'paused' && 'text-blue-500',
           timerState === 'completed' && 'text-blue-600 font-medium'
         )}>
-          {timerState === 'idle' && 'Ready to Start Working'}
+          {timerState === 'idle' && (timerDuration > 0 ? 'Ready to Start Working' : 'Set timer duration to begin')}
           {timerState === 'running' && 'Focusing...'}
           {timerState === 'paused' && 'Paused'}
           {timerState === 'completed' && 'Work Complete! Time for a break'}

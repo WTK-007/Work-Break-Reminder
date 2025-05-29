@@ -26,7 +26,7 @@ const TimerSettings: React.FC = () => {
     availableVoices
   } = useTimer();
   const [customMinutes, setCustomMinutes] = useState<string>(
-    (timerDuration / 60).toString()
+    timerDuration > 0 ? (timerDuration / 60).toString() : ''
   );
 
   const presetTimes = [
@@ -69,43 +69,20 @@ const TimerSettings: React.FC = () => {
 
   const isDisabled = timerState === 'running';
 
-  // Get simplified voice display name
+  // Get simplified voice display name - only show the person's name
   const getVoiceDisplayName = (voice: SpeechSynthesisVoice) => {
-    let name = voice.name;
+    const allowedVoiceNames = ['Samantha', 'Aaron', 'Ralph'];
     
-    // Microsoft voices (high quality)
-    if (name.includes('Microsoft Zira')) return 'Zira (Female, US English)';
-    if (name.includes('Microsoft Hazel')) return 'Hazel (Female, British English)';
-    if (name.includes('Microsoft David')) return 'David (Male, US English)';
-    if (name.includes('Microsoft Mark')) return 'Mark (Male, US English)';
+    // Find which allowed name this voice contains
+    const foundName = allowedVoiceNames.find(name => voice.name.includes(name));
     
-    // Apple/macOS voices
-    if (name.includes('Samantha')) return 'Samantha (Female, US English)';
-    if (name.includes('Victoria')) return 'Victoria (Female, US English)';
-    if (name.includes('Allison')) return 'Allison (Female, US English)';
-    if (name.includes('Alex')) return 'Alex (Male, US English)';
-    
-    // Google voices
-    if (name.includes('Google') && voice.lang === 'en-US') return 'Google (US English)';
-    if (name.includes('Google') && voice.lang === 'en-GB') return 'Google (British English)';
-    if (name.includes('Google') && voice.lang === 'en-AU') return 'Google (Australian English)';
-    
-    // Default display for other voices
-    const langMap: { [key: string]: string } = {
-      'en-US': 'US English',
-      'en-GB': 'British English',
-      'en-AU': 'Australian English',
-      'en-CA': 'Canadian English',
-      'en-IN': 'Indian English'
-    };
-    
-    const langDisplay = langMap[voice.lang] || voice.lang;
-    return `${name} (${langDisplay})`;
+    // Return just the name if found, otherwise fall back to the voice name
+    return foundName || voice.name;
   };
 
   const testVoiceReminder = () => {
     if ('speechSynthesis' in window) {
-      const testText = "Take a break and rest well";
+      const testText = "Hello, this is your selected voice for break reminders";
       const utterance = new SpeechSynthesisUtterance(testText);
       
       // Use currently selected voice
@@ -124,9 +101,9 @@ const TimerSettings: React.FC = () => {
       }
       
       utterance.lang = 'en-US';
-      utterance.rate = 0.8;
-      utterance.pitch = 1.0;
-      utterance.volume = 0.9;
+      utterance.rate = 0.9;   // Clear speaking rate
+      utterance.pitch = 1.0;  // Natural pitch
+      utterance.volume = 1.0; // Full volume for clarity
       
       speechSynthesis.speak(utterance);
     }

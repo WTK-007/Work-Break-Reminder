@@ -43,8 +43,8 @@ export const useTimer = (): TimerContextType => {
 
 export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentTask, setCurrentTask] = useState<string>('');
-  const [timerDuration, setTimerDuration] = useState<number>(25 * 60); // Default 25 minutes
-  const [remainingTime, setRemainingTime] = useState<number>(25 * 60);
+  const [timerDuration, setTimerDuration] = useState<number>(0); // Default 0 seconds - no default time
+  const [remainingTime, setRemainingTime] = useState<number>(0);
   const [timerState, setTimerState] = useState<TimerState>('idle');
   const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
   const [restSuggestions, setRestSuggestions] = useState<string[]>([]);
@@ -96,50 +96,52 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           return;
         }
         
-        // Filter for English voices - prioritize natural sounding female voices
-        const englishVoices = voices.filter(voice => {
-          // Prioritize high-quality English voices
-          if (voice.lang.startsWith('en')) {
-            // Microsoft voices (usually highest quality)
-            if (voice.name.includes('Microsoft')) return true;
+        // Filter for specific voices only - keep only the requested voices, one per name
+        const allowedVoiceNames = ['Samantha', 'Aaron', 'Ralph'];
+        const uniqueVoices: SpeechSynthesisVoice[] = [];
+        
+        // For each allowed name, find the best matching voice
+        allowedVoiceNames.forEach(allowedName => {
+          const matchingVoices = voices.filter(voice => voice.name.includes(allowedName));
+          
+          if (matchingVoices.length > 0) {
+            // Select the best voice for this name (prefer local/high-quality voices)
+            const bestVoice = matchingVoices.sort((a, b) => {
+              // Prefer local voices
+              if (a.localService && !b.localService) return -1;
+              if (!a.localService && b.localService) return 1;
+              
+              // Prefer voices with fewer extra words in name (simpler names are usually better)
+              const aWordCount = a.name.split(' ').length;
+              const bWordCount = b.name.split(' ').length;
+              if (aWordCount < bWordCount) return -1;
+              if (aWordCount > bWordCount) return 1;
+              
+              return 0;
+            })[0];
             
-            // Google voices (good quality)
-            if (voice.name.includes('Google')) return true;
-            
-            // Apple/System voices (on Safari/macOS)
-            if (voice.name.includes('Samantha') || voice.name.includes('Victoria') || voice.name.includes('Allison')) return true;
-            
-            // Other quality English voices
-            if (voice.localService && voice.lang === 'en-US') return true;
-            
-            return false;
+            uniqueVoices.push(bestVoice);
           }
-          return false;
         });
         
-        // Sort by preference: female voices first, then by quality
-        const sortedVoices = englishVoices.sort((a, b) => {
+        // Sort by preference: female voices first, then alphabetical
+        const sortedVoices = uniqueVoices.sort((a, b) => {
           // Prefer female voices (usually contain these keywords)
-          const aIsFemale = /female|woman|girl|samantha|victoria|allison|zira|hazel/i.test(a.name);
-          const bIsFemale = /female|woman|girl|samantha|victoria|allison|zira|hazel/i.test(b.name);
+          const aIsFemale = /female|woman|girl|samantha/i.test(a.name);
+          const bIsFemale = /female|woman|girl|samantha/i.test(b.name);
           
           if (aIsFemale && !bIsFemale) return -1;
           if (!aIsFemale && bIsFemale) return 1;
           
-          // Prefer Microsoft voices
-          if (a.name.includes('Microsoft') && !b.name.includes('Microsoft')) return -1;
-          if (!a.name.includes('Microsoft') && b.name.includes('Microsoft')) return 1;
-          
-          // Prefer local voices
-          if (a.localService && !b.localService) return -1;
-          if (!a.localService && b.localService) return 1;
-          
-          return 0;
+          // Alphabetical order as secondary sort
+          const aName = allowedVoiceNames.find(name => a.name.includes(name)) || a.name;
+          const bName = allowedVoiceNames.find(name => b.name.includes(name)) || b.name;
+          return aName.localeCompare(bName);
         });
         
         setAvailableVoices(sortedVoices);
         setIsVoicesLoaded(true);
-        console.log("Loaded English voices:", sortedVoices.map(v => `${v.name} (${v.lang})`));
+        console.log("Loaded high-quality voices:", sortedVoices.map(v => `${v.name} (${v.lang})`));
       }
     };
 
@@ -165,20 +167,16 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Auto select default voice (only execute once on initial load)
   useEffect(() => {
     if (isVoicesLoaded && !selectedVoice && availableVoices.length > 0) {
-      const femaleVoicePreferences = [
-        'Microsoft Zira Desktop - English (United States)', // High quality female voice
-        'Microsoft Hazel Desktop - English (Great Britain)', // British female voice
-        'Google US English', // Google female voice
-        'Samantha', // macOS female voice
-        'Victoria', // macOS female voice
-        'Allison' // macOS female voice
+      const voicePreferences = [
+        'Samantha', // Usually female voice, high quality
+        'Aaron',    // Male voice, clear
+        'Ralph'     // Male voice, deep
       ];
       
       let bestVoice = null;
-      for (const preference of femaleVoicePreferences) {
+      for (const preference of voicePreferences) {
         bestVoice = availableVoices.find(voice => 
-          voice.name.includes(preference.split(' ')[0]) || 
-          voice.name === preference
+          voice.name.includes(preference)
         );
         if (bestVoice) break;
       }
@@ -255,7 +253,10 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setIsLoadingSuggestions(true);
     setRestSuggestions([]); // 清空之前的建议
     
-    console.log(`Fetching break suggestions for task: "${currentTask}", duration: ${Math.floor(timerDuration / 60)} minutes`);
+    // Use default task description if no task is provided
+    const taskForAPI = currentTask.trim() || 'focused work';
+    
+    console.log(`Fetching break suggestions for task: "${taskForAPI}", duration: ${Math.floor(timerDuration / 60)} minutes`);
     
     try {
       const response = await fetch("/api/rest-suggestions", {
@@ -264,7 +265,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          currentTask,
+          currentTask: taskForAPI,
           timerDuration
         })
       });
@@ -366,11 +367,11 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           }
         }
         
-        // 设置温柔的语音参数
-        utterance.lang = 'en-US';     // 英文语音
-        utterance.rate = 0.85;        // 较慢的语速，更温柔
-        utterance.pitch = 1.1;        // 稍高的音调，更温和
-        utterance.volume = 0.9;       // 适中的音量
+        // 设置清晰的语音参数
+        utterance.lang = 'en-US';
+        utterance.rate = 0.9;   // 稍快一些，更清晰
+        utterance.pitch = 1.0;  // 自然的音调
+        utterance.volume = 1.0; // 最大音量确保清晰
         
         // 添加语音事件监听
         utterance.onstart = () => {
@@ -398,9 +399,9 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const startTimer = useCallback(() => {
-    // 验证任务内容
-    if (!currentTask || currentTask.trim() === '') {
-      console.log("Cannot start timer: task content is empty");
+    // 验证计时时长
+    if (timerDuration <= 0) {
+      console.log("Cannot start timer: timer duration is not set");
       return;
     }
     
@@ -426,7 +427,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     // 设置计时器状态为运行
     setTimerState('running');
-  }, [timerState, timerDuration, currentTask]);
+  }, [timerState, timerDuration]);
 
   const pauseTimer = useCallback(() => {
     setTimerState('paused');
@@ -482,11 +483,11 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
           }
           
-          // 设置温柔的语音参数
+          // 设置清晰的语音参数
           utterance.lang = 'en-US';
-          utterance.rate = 0.8;   // 稍慢一些，便于理解
-          utterance.pitch = 1.1;  // 温和的音调
-          utterance.volume = 0.9;
+          utterance.rate = 0.9;   // 稍快一些，更清晰
+          utterance.pitch = 1.0;  // 自然的音调
+          utterance.volume = 1.0; // 最大音量确保清晰
           
           utterance.onend = () => {
             currentIndex++;

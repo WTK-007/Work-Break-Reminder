@@ -6,11 +6,11 @@ import { useTimer } from '../../providers/TimerProvider';
 import { Play, Pause, RotateCcw, AlertCircle } from 'lucide-react';
 
 const TimerControls: React.FC = () => {
-  const { timerState, startTimer, pauseTimer, resetTimer, currentTask } = useTimer();
+  const { timerState, startTimer, pauseTimer, resetTimer, timerDuration } = useTimer();
   
-  // Check if task is empty
-  const isTaskEmpty = !currentTask || currentTask.trim() === '';
-  const canStart = !isTaskEmpty && (timerState === 'idle' || timerState === 'paused');
+  // Check if timer duration is set
+  const isTimerNotSet = timerDuration <= 0;
+  const canStart = !isTimerNotSet && (timerState === 'idle' || timerState === 'paused');
 
   return (
     <div className="mb-6">
@@ -29,7 +29,7 @@ const TimerControls: React.FC = () => {
             onClick={startTimer}
             className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed shadow-sm"
             size="lg"
-            disabled={isTaskEmpty}
+            disabled={isTimerNotSet}
           >
             <Play className="w-5 h-5 mr-2" />
             {timerState === 'idle' ? 'Start' : 
@@ -50,10 +50,10 @@ const TimerControls: React.FC = () => {
         </Button>
       </div>
       
-      {isTaskEmpty && (timerState === 'idle' || timerState === 'paused' || timerState === 'completed') && (
+      {isTimerNotSet && (timerState === 'idle' || timerState === 'paused' || timerState === 'completed') && (
         <div className="flex items-center justify-center mt-3 text-sm text-blue-600">
           <AlertCircle className="w-4 h-4 mr-1" />
-          Please enter a task before starting the timer
+          Please set a timer duration before starting
         </div>
       )}
     </div>
