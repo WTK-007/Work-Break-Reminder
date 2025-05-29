@@ -16,6 +16,7 @@ interface TimerContextType {
   startTimer: () => void;
   pauseTimer: () => void;
   resetTimer: () => void;
+  addTime: (minutes: number) => void;
   restSuggestions: string[];
   setRestSuggestions: (suggestions: string[]) => void;
   isLoadingSuggestions: boolean;
@@ -442,6 +443,23 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setHasPlayedNotificationSound(false);
   }, [timerDuration]);
 
+  // 增加计时器时间的方法
+  const addTime = useCallback((minutes: number) => {
+    const addedSeconds = minutes * 60;
+    
+    // 增加总时长
+    const newDuration = timerDuration + addedSeconds;
+    setTimerDuration(newDuration);
+    
+    // 增加剩余时间
+    setRemainingTime(prevTime => prevTime + addedSeconds);
+    
+    // 保存到localStorage
+    localStorage.setItem('timerDuration', newDuration.toString());
+    
+    console.log(`Added ${minutes} minutes to timer. New duration: ${Math.floor(newDuration / 60)} minutes`);
+  }, [timerDuration]);
+
   const playRestSuggestions = (shouldCancel: boolean = true) => {
     if (restSuggestions.length === 0) {
       return;
@@ -543,6 +561,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     startTimer,
     pauseTimer,
     resetTimer,
+    addTime,
     restSuggestions,
     setRestSuggestions,
     isLoadingSuggestions,

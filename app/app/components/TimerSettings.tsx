@@ -110,66 +110,67 @@ const TimerSettings: React.FC = () => {
   };
 
   return (
-    <div className="mb-6">
-      <Label className="block text-sm font-medium mb-3 text-blue-700">
-        <Clock className="w-4 h-4 inline-block mr-1 text-blue-600" />
-        Work Duration Settings
-      </Label>
-      
-      <div className="flex flex-wrap gap-2 mb-4">
-        {presetTimes.map((preset) => (
-          <Button
-            key={preset.minutes}
-            variant={timerDuration === preset.minutes * 60 ? "default" : "outline"}
-            className={
-              timerDuration === preset.minutes * 60 
-                ? "bg-blue-600 hover:bg-blue-700 text-white" 
-                : "border-blue-200 text-blue-700 hover:bg-blue-50"
-            }
-            onClick={() => handlePresetSelect(preset.minutes)}
-            disabled={isDisabled}
-          >
-            {preset.label}
-          </Button>
-        ))}
-      </div>
-      
-      <form onSubmit={handleCustomTimeSubmit} className="flex gap-2 mb-1">
-        <div className="flex-1">
+    <div className="space-y-6">
+      {/* Duration Settings */}
+      <div>
+        <Label className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+          <Clock className="w-4 h-4 mr-2 text-gray-500" />
+          Duration
+        </Label>
+        
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          {presetTimes.map((preset) => (
+            <Button
+              key={preset.minutes}
+              variant={timerDuration === preset.minutes * 60 ? "default" : "outline"}
+              className={
+                timerDuration === preset.minutes * 60 
+                  ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                  : "border-gray-200 text-gray-700 hover:bg-gray-50"
+              }
+              onClick={() => handlePresetSelect(preset.minutes)}
+              disabled={isDisabled}
+              size="sm"
+            >
+              {preset.label}
+            </Button>
+          ))}
+        </div>
+        
+        <form onSubmit={handleCustomTimeSubmit} className="flex gap-2">
           <Input
             type="number"
             min="1"
             max="720"
             value={customMinutes}
             onChange={handleCustomTimeChange}
-            className="w-full focus-visible:ring-blue-500"
+            placeholder="Custom minutes"
+            className="flex-1 text-sm border-gray-200 focus-visible:ring-blue-500 focus-visible:border-blue-500"
             disabled={isDisabled}
-            aria-label="Custom minutes"
           />
-        </div>
-        <Button 
-          type="submit"
-          variant="outline"
-          className="border-blue-300 text-blue-700 hover:bg-blue-50"
-          disabled={isDisabled}
-        >
-          Set
-        </Button>
-      </form>
-      
-      <p className="text-xs text-blue-600 mb-4">Set work duration from 1-720 minutes</p>
+          <Button 
+            type="submit"
+            variant="outline"
+            className="border-gray-200 text-gray-700 hover:bg-gray-50 px-4"
+            disabled={isDisabled}
+            size="sm"
+          >
+            Set
+          </Button>
+        </form>
+        
+        <p className="text-xs text-gray-500 mt-2">1-720 minutes</p>
+      </div>
 
-      {/* Voice Reminder Settings */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between p-3 border border-blue-200 rounded-lg bg-blue-50">
-          <div className="flex items-center space-x-2">
-            {voiceReminderEnabled ? (
-              <Volume2 className="w-4 h-4 text-blue-600" />
-            ) : (
-              <VolumeX className="w-4 h-4 text-blue-400" />
-            )}
-            <span className="text-sm font-medium text-blue-700">Voice Reminders</span>
-          </div>
+      {/* Voice Settings */}
+      <div className="space-y-4">
+        <Label className="text-sm font-medium text-gray-700 flex items-center">
+          <Volume2 className="w-4 h-4 mr-2 text-gray-500" />
+          Voice Reminders
+        </Label>
+        
+        <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
+          <span className="text-sm text-gray-700">Enable voice notifications</span>
           <div className="flex items-center space-x-2">
             {voiceReminderEnabled && (
               <Button
@@ -177,36 +178,33 @@ const TimerSettings: React.FC = () => {
                 size="sm"
                 onClick={testVoiceReminder}
                 disabled={isDisabled}
-                className="text-xs px-2 py-1 h-6 border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white"
+                className="text-xs px-2 py-1 h-7"
               >
                 Test
               </Button>
             )}
-            <div className="relative">
-              <Switch
-                checked={voiceReminderEnabled}
-                onCheckedChange={setVoiceReminderEnabled}
-                disabled={isDisabled}
-                className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-blue-200"
-              />
-            </div>
+            <Switch
+              checked={voiceReminderEnabled}
+              onCheckedChange={setVoiceReminderEnabled}
+              disabled={isDisabled}
+            />
           </div>
         </div>
 
         {voiceReminderEnabled && (
           <div className="space-y-3">
             {/* Voice Selection */}
-            <div className="p-3 border border-blue-200 rounded-lg bg-blue-50">
-              <div className="flex items-center space-x-2 mb-2">
-                <Mic className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-700">Select Voice</span>
-              </div>
+            <div>
+              <Label className="text-xs text-gray-600 mb-2 flex items-center">
+                <Mic className="w-3 h-3 mr-1" />
+                Voice
+              </Label>
               <Select
                 value={selectedVoice}
                 onValueChange={setSelectedVoice}
                 disabled={isDisabled}
               >
-                <SelectTrigger className="w-full bg-white border-blue-200 focus:ring-blue-500">
+                <SelectTrigger className="w-full bg-white border-gray-200">
                   <SelectValue placeholder="Choose a voice..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -220,21 +218,17 @@ const TimerSettings: React.FC = () => {
             </div>
             
             {/* Auto-play suggestions toggle */}
-            <div className="flex items-center justify-between p-3 border border-blue-200 rounded-lg bg-blue-50">
-              <div className="flex items-center space-x-2">
-                <Volume2 className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-700">Auto-play Break Suggestions</span>
-              </div>
+            <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
+              <span className="text-sm text-gray-700">Auto-play break suggestions</span>
               <Switch
                 checked={autoPlaySuggestions}
                 onCheckedChange={setAutoPlaySuggestions}
                 disabled={isDisabled}
-                className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-blue-200"
               />
             </div>
             
-            <p className="text-xs text-blue-600 px-1">
-              When timer ends, you'll hear a notification sound and gentle voice reminder{autoPlaySuggestions ? ', followed by auto-played break suggestions' : ''}
+            <p className="text-xs text-gray-500">
+              Get audio notifications and personalized break suggestions when your focus session ends
             </p>
           </div>
         )}

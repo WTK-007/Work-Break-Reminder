@@ -10,10 +10,10 @@ const TaskInput: React.FC = () => {
   const { currentTask, setCurrentTask, timerState } = useTimer();
 
   return (
-    <div className="mb-6">
-      <Label htmlFor="task-input" className="block text-sm font-medium mb-2 text-blue-700">
-        <Pencil className="w-4 h-4 inline-block mr-1 text-blue-600" />
-        Current Task (Optional)
+    <div className="space-y-3">
+      <Label htmlFor="task-input" className="text-sm font-medium text-gray-700 flex items-center">
+        <Pencil className="w-4 h-4 mr-2 text-gray-500" />
+        What are you working on? (Optional)
       </Label>
       <Input
         id="task-input"
@@ -22,8 +22,13 @@ const TaskInput: React.FC = () => {
         value={currentTask}
         onChange={(e) => setCurrentTask(e.target.value)}
         disabled={timerState === 'running'}
-        className="w-full bg-white border-blue-200 focus-visible:ring-blue-500 focus-visible:ring-offset-blue-200"
+        className="w-full bg-white border-gray-200 focus-visible:ring-blue-500 focus-visible:ring-offset-0 focus-visible:border-blue-500 text-base py-3 px-4 rounded-xl disabled:bg-gray-50 disabled:text-gray-500"
       />
+      {currentTask && (
+        <p className="text-xs text-gray-500 mt-2">
+          This will help generate personalized break suggestions
+        </p>
+      )}
     </div>
   );
 };
