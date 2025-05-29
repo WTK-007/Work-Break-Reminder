@@ -12,17 +12,17 @@ export async function POST(request: NextRequest) {
 
     // 验证输入
     if (!currentTask || typeof currentTask !== 'string') {
-      console.error('API调用缺少必要参数: currentTask');
+      console.error('API call missing required parameter: currentTask');
       return NextResponse.json(
-        { error: '缺少必要参数: currentTask' },
+        { error: 'Missing required parameter: currentTask' },
         { status: 400 }
       );
     }
 
     if (!timerDuration || typeof timerDuration !== 'number') {
-      console.error('API调用缺少必要参数: timerDuration');
+      console.error('API call missing required parameter: timerDuration');
       return NextResponse.json(
-        { error: '缺少必要参数: timerDuration' },
+        { error: 'Missing required parameter: timerDuration' },
         { status: 400 }
       );
     }
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     const timestamp = new Date().toISOString();
     const randomSeed = Math.floor(Math.random() * 1000);
 
-    console.log(`正在调用DeepSeek API生成休息建议，任务: ${currentTask}, 时长: ${Math.floor(timerDuration / 60)}分钟`);
+    console.log(`Calling DeepSeek API to generate break suggestions, Task: ${currentTask}, Duration: ${Math.floor(timerDuration / 60)} minutes`);
     
     try {
       // 严格按照OpenRouter官方示例格式创建请求
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
         headers: {
           "Authorization": `Bearer ${API_CONFIG.OPENROUTER_API_KEY}`,
           "HTTP-Referer": "http://localhost:3000",
-          "X-Title": "Work Rest Reminder",
+          "X-Title": "FocusFlow Break Suggestions",
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
@@ -57,57 +57,57 @@ export async function POST(request: NextRequest) {
           "messages": [
             {
               "role": "system",
-              "content": "你是休息活动建议专家。每次生成3个简洁、多样化的5-10分钟休息活动建议。直接描述活动内容，不要使用特殊符号如方括号。不要解释原因或好处，只描述具体做法。用自然、简洁的语言，避免使用数字编号。每个建议控制在25字以内。"
+              "content": "You are a break activity expert. Generate 3 concise, diverse 5-10 minute break activities. Describe the activity directly without special symbols like brackets. Don't explain reasons or benefits, just describe what to do. Use natural, concise language, avoid using numbers. Keep each suggestion under 25 words."
             },
             {
               "role": "user",
-              "content": `我刚刚完成了${currentTask}工作，专注了${Math.floor(timerDuration / 60)}分钟。请推荐3个简洁的5-10分钟休息活动，要直接描述做法，不要解释，不要使用括号等特殊符号。随机种子：${randomSeed}`
+              "content": `I just finished working on ${currentTask} for ${Math.floor(timerDuration / 60)} minutes. Please recommend 3 concise 5-10 minute break activities. Describe what to do directly, no explanations, no special symbols like brackets. Random seed: ${randomSeed}`
             }
           ]
         })
       });
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => '无法获取错误详情');
-        console.error(`OpenRouter API错误: ${response.status} - ${errorText}`);
+        const errorText = await response.text().catch(() => 'Unable to get error details');
+        console.error(`OpenRouter API error: ${response.status} - ${errorText}`);
         throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
       
       if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
-        console.error('DeepSeek API响应格式无效:', JSON.stringify(data));
-        throw new Error('API响应格式无效');
+        console.error('Invalid DeepSeek API response format:', JSON.stringify(data));
+        throw new Error('Invalid API response format');
       }
       
-      console.log("DeepSeek API响应:", data.choices[0].message.content);
+      console.log("DeepSeek API response:", data.choices[0].message.content);
       
       // 使用更简单的分割逻辑，适应新的响应格式
       let suggestions = data.choices[0].message.content
-        .split(/\n+|。|；|;/)
+        .split(/\n+|。|；|;|\.|!/)
         .map((s: string) => s.trim())
-        .filter((s: string) => s.length > 5 && s.length < 30) // 过滤掉太短或太长的建议
+        .filter((s: string) => s.length > 5 && s.length < 50) // 过滤掉太短或太长的建议
         .map((s: string) => {
           // 移除特殊符号和数字编号
-          return s.replace(/^\d+[\.\s、]+/, '')
+          return s.replace(/^\d+[\.\s\-]+/, '')
                  .replace(/[\[\]「」()（）{}]/g, '')
                  .trim();
         });
       
-      console.log("解析后的建议:", suggestions);
+      console.log("Parsed suggestions:", suggestions);
 
       // 确保必须有3个建议，不足的用多样化的默认建议补充
       const diverseDefaultSuggestions = [
-        "播放轻快音乐随着节奏自由摆动身体约3分钟",
-        "把纸张旋转180度用非惯用手写字或画简单图案",
-        "闭上眼睛专注聆听环境中的5种不同声音",
-        "站起来做几个简单的颈部和肩膀拉伸动作",
-        "冲泡一杯花茶慢慢品味每一口的味道",
-        "整理工作桌面让环境更整洁有序",
-        "闭眼深呼吸专注于呼吸的节奏",
-        "看向窗外寻找三个以前没注意的细节",
-        "给朋友或家人发一条关心的消息",
-        "练习眼球运动来缓解眼睛疲劳"
+        "Take a 5-minute walk outside for fresh air and light exercise",
+        "Do simple neck and shoulder stretches to release tension",
+        "Practice deep breathing exercises for 3 minutes",
+        "Make a cup of tea and sip it mindfully",
+        "Look out the window and find three things you haven't noticed before",
+        "Do some light desk exercises or gentle yoga poses",
+        "Listen to a favorite song and move to the rhythm",
+        "Write down three things you're grateful for today",
+        "Tidy up your workspace to create a cleaner environment",
+        "Close your eyes and practice a brief meditation"
       ];
       
       // 随机选择不同的默认建议
@@ -122,29 +122,29 @@ export async function POST(request: NextRequest) {
       // 确保只有3个建议
       suggestions = suggestions.slice(0, 3);
       
-      console.log("最终返回的建议:", suggestions);
+      console.log("Final suggestions returned:", suggestions);
       return NextResponse.json({ suggestions });
       
     } catch (apiError) {
-      console.error("调用DeepSeek API时出错:", apiError);
+      console.error("Error calling DeepSeek API:", apiError);
       throw apiError; // 向上抛出错误以便被外层catch捕获
     }
 
   } catch (error) {
-    console.error("REST建议API错误:", error);
+    console.error("REST suggestions API error:", error);
     
     // 返回随机的多样化默认建议，已优化格式
     const diverseDefaultSuggestions = [
-      "播放轻快音乐随着节奏自由摆动身体约3分钟",
-      "把纸张旋转180度用非惯用手写字或画简单图案",
-      "闭上眼睛专注聆听环境中的5种不同声音",
-      "站起来做几个简单的颈部和肩膀拉伸动作",
-      "冲泡一杯花茶慢慢品味每一口的味道",
-      "整理工作桌面让环境更整洁有序",
-      "闭眼深呼吸专注于呼吸的节奏",
-      "看向窗外寻找三个以前没注意的细节",
-      "给朋友或家人发一条关心的消息",
-      "练习眼球运动来缓解眼睛疲劳"
+      "Take a 5-minute walk outside for fresh air and light exercise",
+      "Do simple neck and shoulder stretches to release tension",
+      "Practice deep breathing exercises for 3 minutes",
+      "Make a cup of tea and sip it mindfully",
+      "Look out the window and find three things you haven't noticed before",
+      "Do some light desk exercises or gentle yoga poses",
+      "Listen to a favorite song and move to the rhythm",
+      "Write down three things you're grateful for today",
+      "Tidy up your workspace to create a cleaner environment",
+      "Close your eyes and practice a brief meditation"
     ];
     
     // 随机选择3个不同的建议
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
       .sort(() => Math.random() - 0.5)
       .slice(0, 3);
     
-    console.log("使用随机默认建议:", shuffledSuggestions);
+    console.log("Using random default suggestions:", shuffledSuggestions);
     return NextResponse.json({ suggestions: shuffledSuggestions });
   }
 } 

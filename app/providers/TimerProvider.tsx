@@ -96,45 +96,50 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           return;
         }
         
-        // 过滤中文语音 - 只保留特定的三个语音
-        const chineseVoices = voices.filter(voice => {
-          // 只保留瑶瑶（Microsoft Yaoyao）
-          if (voice.name.includes('Microsoft Yaoyao')) return true;
-          
-          // 只保留特定的Google语音作为婷婷和小花
-          if (voice.name.includes('Google')) {
-            // 婷婷（普通话）- 中国大陆版本
-            if (voice.name.includes('中国大陆') || voice.name.includes('Mainland') || voice.lang === 'zh-CN') return true;
-            // 小花（粤语）- 香港版本  
-            if (voice.name.includes('香港') || voice.name.includes('Hong Kong') || voice.lang === 'zh-HK') return true;
+        // Filter for English voices - prioritize natural sounding female voices
+        const englishVoices = voices.filter(voice => {
+          // Prioritize high-quality English voices
+          if (voice.lang.startsWith('en')) {
+            // Microsoft voices (usually highest quality)
+            if (voice.name.includes('Microsoft')) return true;
+            
+            // Google voices (good quality)
+            if (voice.name.includes('Google')) return true;
+            
+            // Apple/System voices (on Safari/macOS)
+            if (voice.name.includes('Samantha') || voice.name.includes('Victoria') || voice.name.includes('Allison')) return true;
+            
+            // Other quality English voices
+            if (voice.localService && voice.lang === 'en-US') return true;
+            
+            return false;
           }
-          
           return false;
         });
         
-        // 去重和优先级排序
-        const uniqueVoices = [];
-        const seenNames = new Set();
+        // Sort by preference: female voices first, then by quality
+        const sortedVoices = englishVoices.sort((a, b) => {
+          // Prefer female voices (usually contain these keywords)
+          const aIsFemale = /female|woman|girl|samantha|victoria|allison|zira|hazel/i.test(a.name);
+          const bIsFemale = /female|woman|girl|samantha|victoria|allison|zira|hazel/i.test(b.name);
+          
+          if (aIsFemale && !bIsFemale) return -1;
+          if (!aIsFemale && bIsFemale) return 1;
+          
+          // Prefer Microsoft voices
+          if (a.name.includes('Microsoft') && !b.name.includes('Microsoft')) return -1;
+          if (!a.name.includes('Microsoft') && b.name.includes('Microsoft')) return 1;
+          
+          // Prefer local voices
+          if (a.localService && !b.localService) return -1;
+          if (!a.localService && b.localService) return 1;
+          
+          return 0;
+        });
         
-        // 优先级顺序：瑶瑶 > 婷婷 > 小花
-        const priorityOrder = [
-          'Microsoft Yaoyao',
-          'Google', // 包含婷婷和小花
-        ];
-        
-        // 按优先级添加语音
-        for (const priority of priorityOrder) {
-          for (const voice of chineseVoices) {
-            if (voice.name.includes(priority) && !seenNames.has(voice.name)) {
-              uniqueVoices.push(voice);
-              seenNames.add(voice.name);
-            }
-          }
-        }
-        
-        setAvailableVoices(uniqueVoices);
+        setAvailableVoices(sortedVoices);
         setIsVoicesLoaded(true);
-        console.log("初始化语音:", uniqueVoices.map(v => `${v.name} (${v.lang})`));
+        console.log("Loaded English voices:", sortedVoices.map(v => `${v.name} (${v.lang})`));
       }
     };
 
@@ -161,16 +166,19 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (isVoicesLoaded && !selectedVoice && availableVoices.length > 0) {
       const femaleVoicePreferences = [
-        'Microsoft Yaoyao - Chinese (Simplified, PRC)', // 瑶瑶（甜美女声）
-        'Google 中文（中国大陆）', // 婷婷（普通话）
-        'Google 中文（香港）' // 小花（粤语）
+        'Microsoft Zira Desktop - English (United States)', // High quality female voice
+        'Microsoft Hazel Desktop - English (Great Britain)', // British female voice
+        'Google US English', // Google female voice
+        'Samantha', // macOS female voice
+        'Victoria', // macOS female voice
+        'Allison' // macOS female voice
       ];
       
       let bestVoice = null;
       for (const preference of femaleVoicePreferences) {
         bestVoice = availableVoices.find(voice => 
           voice.name.includes(preference.split(' ')[0]) || 
-          voice.name.includes(preference.split(' ')[1])
+          voice.name === preference
         );
         if (bestVoice) break;
       }
@@ -181,7 +189,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       
       if (bestVoice) {
-        console.log("自动选择语音:", bestVoice.name);
+        console.log("Auto-selected voice:", bestVoice.name);
         setSelectedVoice(bestVoice.name);
       }
     }
@@ -197,7 +205,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         timerState === 'completed' &&
         !isLoadingSuggestions) {
       
-      console.log("条件满足，开始自动播放休息建议");
+      console.log("Auto-playing break suggestions");
       setHasPlayedSuggestions(true);
       
       setTimeout(() => {
@@ -224,7 +232,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             clearInterval(interval);
             setTimerState('completed');
             // 调用播放函数，让函数内部处理防重复
-            console.log("计时完成，准备播放提示音");
+            console.log("Timer completed, preparing to play notification");
             playNotificationSound();
             return 0;
           }
@@ -247,7 +255,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setIsLoadingSuggestions(true);
     setRestSuggestions([]); // 清空之前的建议
     
-    console.log(`开始获取休息建议，任务: "${currentTask}", 时长: ${Math.floor(timerDuration / 60)}分钟`);
+    console.log(`Fetching break suggestions for task: "${currentTask}", duration: ${Math.floor(timerDuration / 60)} minutes`);
     
     try {
       const response = await fetch("/api/rest-suggestions", {
@@ -266,23 +274,23 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       const data = await response.json();
-      console.log("API返回的休息建议:", data.suggestions);
+      console.log("API returned break suggestions:", data.suggestions);
       setRestSuggestions(data.suggestions);
       
     } catch (error) {
       console.error("Error fetching rest suggestions:", error);
       // 使用多样化的随机默认建议作为后备
       const diverseDefaultSuggestions = [
-        "尝试5分钟的深呼吸冥想，专注于呼吸节奏。",
-        "播放一首喜欢的音乐，随着节拍轻松摆动身体。",
-        "给朋友或家人发一条关心的消息。",
-        "观察窗外的景色，寻找三个之前没注意到的细节。",
-        "做一些简单的颈部和肩膀拉伸运动。",
-        "喝一杯温水，慢慢品味每一口。",
-        "整理一下工作桌面，让环境更整洁。",
-        "练习几分钟正念，专注当下的感受。",
-        "阅读几页轻松的文章或小故事。",
-        "做几个简单的眼球运动练习。"
+        "Take a 5-minute walk outside for fresh air and light exercise",
+        "Do simple neck and shoulder stretches to release tension",
+        "Practice deep breathing exercises for 3 minutes",
+        "Make a cup of tea and sip it mindfully",
+        "Look out the window and find three things you haven't noticed before",
+        "Do some light desk exercises or gentle yoga poses",
+        "Listen to a favorite song and move to the rhythm",
+        "Write down three things you're grateful for today",
+        "Tidy up your workspace to create a cleaner environment",
+        "Close your eyes and practice a brief meditation"
       ];
       
       // 随机选择3个不同的建议
@@ -290,7 +298,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         .sort(() => Math.random() - 0.5)
         .slice(0, 3);
       
-      console.log("API调用失败，使用随机默认建议:", randomSuggestions);
+      console.log("API call failed, using random default suggestions:", randomSuggestions);
       setRestSuggestions(randomSuggestions);
       
     } finally {
@@ -299,17 +307,17 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const playNotificationSound = () => {
-    console.log("playNotificationSound被调用，ref状态:", notificationSoundPlayedRef.current);
+    console.log("playNotificationSound called, ref status:", notificationSoundPlayedRef.current);
     
     // 检查是否已播放过
     if (notificationSoundPlayedRef.current) {
-      console.log("提示音已播放过，跳过");
+      console.log("Notification sound already played, skipping");
       return;
     }
     
     // 标记为已播放
     notificationSoundPlayedRef.current = true;
-    console.log("设置ref为true，开始播放提示音");
+    console.log("Setting ref to true, starting notification sound");
     
     // 创建并播放提示音
     try {
@@ -318,14 +326,14 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       audio.play()
         .then(() => {
-          console.log("✅ 提示音播放成功");
+          console.log("✅ Notification sound played successfully");
         })
         .catch(e => {
-          console.log("❌ 提示音播放失败:", e);
+          console.log("❌ Notification sound failed to play:", e);
         });
         
     } catch (error) {
-      console.log("❌ 创建音频对象失败:", error);
+      console.log("❌ Failed to create audio object:", error);
     }
     
     // 根据用户设置决定是否播放语音提醒
@@ -342,8 +350,8 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // 检查浏览器是否支持语音合成
     if ('speechSynthesis' in window) {
       try {
-        // 创建简洁的语音提醒内容
-        const reminderText = `工作时间结束了，你已经专注工作${Math.floor(timerDuration / 60)}分钟，现在该休息一下了`;
+        // 创建英文语音提醒内容
+        const reminderText = `Your ${Math.floor(timerDuration / 60)}-minute focus session is complete. Time to take a well-deserved break.`;
         
         // 创建语音合成实例
         const utterance = new SpeechSynthesisUtterance(reminderText);
@@ -354,45 +362,45 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const chosenVoice = voices.find(voice => voice.name === selectedVoice);
           if (chosenVoice) {
             utterance.voice = chosenVoice;
-            console.log("使用选择的语音:", chosenVoice.name);
+            console.log("Using selected voice:", chosenVoice.name);
           }
         }
         
         // 设置温柔的语音参数
-        utterance.lang = 'zh-CN';     // 中文语音
-        utterance.rate = 0.8;         // 较慢的语速，更温柔
-        utterance.pitch = 1.3;        // 稍高的音调，更甜美
+        utterance.lang = 'en-US';     // 英文语音
+        utterance.rate = 0.85;        // 较慢的语速，更温柔
+        utterance.pitch = 1.1;        // 稍高的音调，更温和
         utterance.volume = 0.9;       // 适中的音量
         
         // 添加语音事件监听
         utterance.onstart = () => {
-          console.log("温柔的语音提醒开始播放");
+          console.log("Gentle voice reminder started playing");
         };
         
         utterance.onend = () => {
-          console.log("语音提醒播放完成");
+          console.log("Voice reminder playback completed");
           setVoiceReminderCompleted(true);
         };
         
         utterance.onerror = (event) => {
-          console.log("语音播放出错:", event.error);
+          console.log("Voice playback error:", event.error);
         };
         
         // 播放语音提醒
         speechSynthesis.speak(utterance);
         
       } catch (error) {
-        console.log("语音提醒播放失败:", error);
+        console.log("Voice reminder playback failed:", error);
       }
     } else {
-      console.log("浏览器不支持语音合成功能");
+      console.log("Browser does not support speech synthesis");
     }
   };
 
   const startTimer = useCallback(() => {
     // 验证任务内容
     if (!currentTask || currentTask.trim() === '') {
-      console.log("无法开始计时：任务内容为空");
+      console.log("Cannot start timer: task content is empty");
       return;
     }
     
@@ -405,7 +413,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     notificationSoundPlayedRef.current = false;
     currentTimerSessionRef.current += 1; // 增加会话ID
     
-    console.log(`开始新的计时会话: ${currentTimerSessionRef.current}`);
+    console.log(`Starting new timer session: ${currentTimerSessionRef.current}`);
     
     if (timerState === 'completed') {
       setRemainingTime(timerDuration);
@@ -413,7 +421,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     
     // 在计时开始前预先获取休息建议
-    console.log("计时开始前预先获取休息建议");
+    console.log("Pre-fetching break suggestions before timer starts");
     fetchRestSuggestions();
     
     // 设置计时器状态为运行
@@ -447,12 +455,12 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       
       try {
-        // 准备播放的文本内容，使用更简洁的格式
-        const introText = "为您推荐以下休息活动";
+        // 准备播放的文本内容，使用英文
+        const introText = "Here are some refreshing break activities for you";
         const suggestionTexts = restSuggestions.map((suggestion, index) => 
-          `第${index + 1}个，${suggestion}`
+          `Option ${index + 1}: ${suggestion}`
         );
-        const outroText = "选择一个你喜欢的活动，好好休息一下吧";
+        const outroText = "Choose one that appeals to you and enjoy your break";
         
         const allTexts = [introText, ...suggestionTexts, outroText];
         let currentIndex = 0;
@@ -475,9 +483,9 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           }
           
           // 设置温柔的语音参数
-          utterance.lang = 'zh-CN';
-          utterance.rate = 0.75;  // 稍慢一些，便于理解
-          utterance.pitch = 1.2;  // 温和的音调
+          utterance.lang = 'en-US';
+          utterance.rate = 0.8;   // 稍慢一些，便于理解
+          utterance.pitch = 1.1;  // 温和的音调
           utterance.volume = 0.9;
           
           utterance.onend = () => {
@@ -487,7 +495,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           };
           
           utterance.onerror = (event) => {
-            console.log("语音播放出错:", event.error);
+            console.log("Voice playback error:", event.error);
             setIsPlayingSuggestions(false);
           };
           
@@ -496,14 +504,14 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         playNext();
         
-        console.log("开始播放休息建议");
+        console.log("Started playing break suggestions");
         
       } catch (error) {
-        console.log("语音播放失败:", error);
+        console.log("Voice playback failed:", error);
         setIsPlayingSuggestions(false);
       }
     } else {
-      console.log("浏览器不支持语音合成功能");
+      console.log("Browser does not support speech synthesis");
     }
   };
 
@@ -512,7 +520,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       speechSynthesis.cancel();
     }
     setIsPlayingSuggestions(false);
-    console.log("停止播放休息建议");
+    console.log("Stopped playing break suggestions");
   };
 
   // 当语音提醒关闭时，自动关闭自动播放休息建议
